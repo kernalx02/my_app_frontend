@@ -8,7 +8,6 @@ export default function Login({ setPage }) {
   const [loggedInUsername, setLoggedInUsername] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // Ensure this matches your Render backend URL exactly
   const API_URL = "https://api-myapp.onrender.com";
 
   const handleLogin = async (e) => {
@@ -41,7 +40,7 @@ export default function Login({ setPage }) {
       // 1. Save user to localStorage
       localStorage.setItem('currentUser', JSON.stringify(data));
       
-      // 2. Notify App.jsx immediately without reload
+      // 2. Notify App.jsx immediately so Navbar updates
       window.dispatchEvent(new Event('storage'));
 
       setLoggedInUsername(data.username);
@@ -58,7 +57,7 @@ export default function Login({ setPage }) {
     return (
       <div className="max-w-md mx-auto glass-card p-12 mt-10 animate-fade-in text-center flex flex-col items-center border border-white/5 bg-[#1e293b]/50 backdrop-blur-xl rounded-[2rem]">
         <div className="p-6 mb-6 rounded-full bg-cyan-500/10 ring-2 ring-cyan-500/20 shadow-inner">
-          {/* FIX: Path for images in the public folder */}
+          {/* IMAGE FIXED: Points to /public/correct_login.png */}
           <img src="/correct_login.png" alt="Success" className="w-24 h-24 object-contain" />
         </div>
         <h2 className="text-3xl font-black text-white italic uppercase tracking-tighter">Welcome Back!</h2>
@@ -67,11 +66,12 @@ export default function Login({ setPage }) {
         </p>
         <button 
           onClick={() => {
-            setPage('landing'); 
+            // REDIRECT FIXED: Now goes straight to the Feed
+            setPage('posts'); 
           }} 
           className="bg-cyan-500 hover:bg-cyan-400 text-black w-full py-4 text-xs tracking-widest font-black uppercase rounded-xl transition-all shadow-lg shadow-cyan-500/20"
         >
-          CONTINUE TO DASHBOARD
+          CONTINUE TO FEED
         </button>
       </div>
     );
