@@ -1,16 +1,23 @@
-import React from 'react';
+import React, { useState } from 'react';
 
-export default function Feed({ posts, handleVote, currentUser }) {
-  // Sort posts by popularity (Net Score)
+export default function Feed({ posts, handleVote, currentUser, handleComment, handleCommentLike }) {
+  const [commentTexts, setCommentTexts] = useState({});
+
   const sortedPosts = [...posts].sort((a, b) => {
     const scoreA = (a.ups?.length || 0) - (a.downs?.length || 0);
     const scoreB = (b.ups?.length || 0) - (b.downs?.length || 0);
     return scoreB - scoreA;
   });
 
+  const onCommentSubmit = (e, postId) => {
+    e.preventDefault();
+    if (!commentTexts[postId]?.trim()) return;
+    handleComment(postId, commentTexts[postId]);
+    setCommentTexts({ ...commentTexts, [postId]: '' });
+  };
+
   return (
-    <div className="space-y-8 max-w-2xl mx-auto px-4">
-      {/* Added animate-fade-in here */}
+    <div className="space-y-8 max-w-2xl mx-auto px-4 pb-20">
       <h2 className="text-3xl font-bold mb-10 text-center text-cyan-400 uppercase tracking-widest animate-fade-in">
         Community Feed
       </h2>
@@ -25,8 +32,7 @@ export default function Feed({ posts, handleVote, currentUser }) {
 
           return (
             <div 
-              key={post.id} 
-              /* Added animate-slide-up and stagger delay */
+              key={post._id || post.id} 
               className="glass-card p-6 flex flex-col gap-4 border border-white/5 shadow-2xl bg-white/5 rounded-3xl animate-slide-up"
               style={{ 
                 animationDelay: `${index * 0.1}s`,
@@ -34,6 +40,7 @@ export default function Feed({ posts, handleVote, currentUser }) {
                 animationFillMode: 'forwards' 
               }}
             >
+              {/* Header */}
               <div className="flex items-center gap-3 border-b border-white/5 pb-4">
                 <div className="w-10 h-10 rounded-full bg-cyan-500/20 border border-cyan-500/40 flex items-center justify-center overflow-hidden font-bold text-xs text-cyan-400">
                   {post.username?.charAt(0).toUpperCase()}
@@ -41,6 +48,7 @@ export default function Feed({ posts, handleVote, currentUser }) {
                 <span className="text-xs font-black uppercase tracking-widest text-slate-400">{post.username}</span>
               </div>
 
+              {/* Content */}
               <p className="text-slate-200 text-lg leading-relaxed">{post.content}</p>
 
               {post.image && (
@@ -54,26 +62,58 @@ export default function Feed({ posts, handleVote, currentUser }) {
                 </div>
               )}
 
-              <div className="flex justify-end items-center pt-2">
+              {/* Voting Bar */}
+              <div className="flex justify-end items-center pt-2 border-b border-white/5 pb-4">
                 <div className="flex items-center gap-4 bg-black/40 px-5 py-2 rounded-full border border-white/5">
                   <button 
                     className={`transition-all font-bold ${isUpvoted ? 'text-orange-500 scale-125' : 'text-slate-500 hover:text-orange-400'}`} 
-                    onClick={() => handleVote(post.id, 'up')}
-                  >
-                    ▲
-                  </button>
-                  
+                    onClick={() => handleVote(post._id || post.id, 'up')}
+                  > ▲ </button>
                   <span className={`font-mono font-bold text-sm ${isUpvoted ? 'text-orange-500' : isDownvoted ? 'text-indigo-400' : 'text-white'}`}>
                     {score}
                   </span>
-                  
                   <button 
                     className={`transition-all font-bold ${isDownvoted ? 'text-indigo-500 scale-125' : 'text-slate-500 hover:text-indigo-400'}`} 
-                    onClick={() => handleVote(post.id, 'down')}
-                  >
-                    ▼
-                  </button>
+                    onClick={() => handleVote(post._id || post.id, 'down')}
+                  > ▼ </button>
                 </div>
+              </div>
+
+              {/* --- COMMENTS SECTION --- */}
+              <div className="mt-2 space-y-4">
+                <div className="max-h-60 overflow-y-auto space-y-3 pr-2 custom-scrollbar">
+                  {post.comments?.map((comment, cIndex) => {
+                    const isLiked = comment.likes?.includes(currentUser?.username);
+                    return (
+                      <div key={cIndex} className="bg-white/5 rounded-2xl p-3 border border-white/5 flex justify-between items-start animate-fade-in">
+                        <div className="flex flex-col gap-1">
+                          <span className="text-[10px] font-black uppercase text-cyan-500 tracking-tighter">{comment.username}</span>
+                          <p className="text-sm text-slate-300">{comment.text}</p>
+                        </div>
+                        <button 
+                          onClick={() => handleCommentLike(post._id || post.id, cIndex)}
+                          className={`text-xs transition-all ${isLiked ? 'text-red-500 scale-110' : 'text-slate-600 hover:text-red-400'}`}
+                        >
+                          {isLiked ? '❤️' : '🤍'} <span className="ml-1 font-mono">{comment.likes?.length || 0}</span>
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Comment Input */}
+                <form onSubmit={(e) => onCommentSubmit(e, post._id || post.id)} className="flex gap-2 mt-4">
+                  <input 
+                    type="text"
+                    placeholder="Write a comment..."
+                    className="input-mini bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-sm text-white w-full outline-none focus:border-cyan-500/50 transition-colors"
+                    value={commentTexts[post._id || post.id] || ''}
+                    onChange={(e) => setCommentTexts({...commentTexts, [post._id || post.id]: e.target.value})}
+                  />
+                  <button type="submit" className="bg-cyan-500 hover:bg-cyan-400 text-black font-black text-[10px] px-4 rounded-xl uppercase tracking-widest transition-all">
+                    Post
+                  </button>
+                </form>
               </div>
             </div>
           );

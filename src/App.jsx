@@ -9,14 +9,13 @@ import Signup from './components/Signup';
 import Profile from './components/Profile';
 import Dashboard from './components/Dashboard';
 
-const MOCK_POSTS = [
-  { id: 1, username: "Admin", content: "Welcome to the Club 2026.", ups: [], downs: [], image: null },
-];
-
 export default function App() {
   const [page, setPage] = useState('landing');
   const [currentUser, setCurrentUser] = useState(null);
   const [posts, setPosts] = useState([]);
+
+  // --- CONFIG ---
+  const API_URL = "https://api-myapp.onrender.com";
 
   useEffect(() => {
     const user = localStorage.getItem('currentUser');
@@ -24,32 +23,36 @@ export default function App() {
     refreshPosts();
   }, []);
 
-  const refreshPosts = () => {
-    const savedPosts = localStorage.getItem('posts');
-    if (savedPosts) {
-      setPosts(JSON.parse(savedPosts));
-    } else {
-      localStorage.setItem('posts', JSON.stringify(MOCK_POSTS));
-      setPosts(MOCK_POSTS);
+  // --- DATABASE ACTIONS ---
+
+  const refreshPosts = async () => {
+    try {
+      const response = await fetch(`${API_URL}/api/posts`);
+      const data = await response.json();
+      setPosts(data);
+    } catch (err) {
+      console.error("Failed to fetch posts from MongoDB:", err);
     }
   };
 
-  const handleVote = (id, type) => {
+  const handleVote = async (id, type) => {
     if (!currentUser) return alert("Please log in to vote!");
+    
+    // Note: You may need a /api/posts/:id/vote route in server.js 
+    // For now, this handles local state update for immediate feedback
     const userId = currentUser.username;
-
     const updatedPosts = posts.map(p => {
-      if (p.id === id) {
-        // Ensure we are working with arrays
+      const postId = p._id || p.id;
+      if (postId === id) {
         let ups = Array.isArray(p.ups) ? p.ups : [];
         let downs = Array.isArray(p.downs) ? p.downs : [];
 
         if (type === 'up') {
           if (ups.includes(userId)) {
-            ups = ups.filter(name => name !== userId); // Remove vote
+            ups = ups.filter(name => name !== userId);
           } else {
-            ups = [...ups, userId]; // Add vote
-            downs = downs.filter(name => name !== userId); // Clear opposite
+            ups = [...ups, userId];
+            downs = downs.filter(name => name !== userId);
           }
         } else {
           if (downs.includes(userId)) {
@@ -63,9 +66,46 @@ export default function App() {
       }
       return p;
     });
-
     setPosts(updatedPosts);
-    localStorage.setItem('posts', JSON.stringify(updatedPosts));
+  };
+
+  const handleComment = async (postId, text) => {
+    if (!currentUser) return alert("Please log in to comment.");
+
+    try {
+      const response = await fetch(`${API_URL}/api/posts/${postId}/comment`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          username: currentUser.username, 
+          text: text 
+        }),
+      });
+
+      if (response.ok) {
+        refreshPosts(); // Reload posts to show the new comment
+      }
+    } catch (err) {
+      console.error("Error posting comment:", err);
+    }
+  };
+
+  const handleCommentLike = async (postId, commentIndex) => {
+    if (!currentUser) return;
+
+    try {
+      const response = await fetch(`${API_URL}/api/posts/${postId}/comment/${commentIndex}/like`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: currentUser.username }),
+      });
+
+      if (response.ok) {
+        refreshPosts(); // Reload posts to show the heart update
+      }
+    } catch (err) {
+      console.error("Error liking comment:", err);
+    }
   };
 
   const handleLogout = () => {
@@ -83,7 +123,17 @@ export default function App() {
       )}
       <main className="max-w-6xl mx-auto pt-36 px-8 pb-24">
         {page === 'landing' && <Home memberCount={posts.length * 5} />}
-        {page === 'posts' && <Feed posts={posts} handleVote={handleVote} currentUser={currentUser} />}
+        
+        {page === 'posts' && (
+          <Feed 
+            posts={posts} 
+            handleVote={handleVote} 
+            currentUser={currentUser} 
+            handleComment={handleComment} 
+            handleCommentLike={handleCommentLike} 
+          />
+        )}
+
         {page === 'post' && <Post setPage={setPage} onPostCreated={refreshPosts} />}
         {page === 'login' && <Login setPage={setPage} />}
         {page === 'signup' && <Signup setPage={setPage} />}
