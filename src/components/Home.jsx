@@ -2,11 +2,26 @@ import React, { useState, useEffect } from 'react';
 
 export default function Home() {
   const [memberCount, setMemberCount] = useState(0);
+  // Update this URL to your actual Render/Backend URL
+  const API_URL = "https://api-myapp.onrender.com"; 
 
   useEffect(() => {
-    // Dynamically fetch member count from localStorage
-    const users = JSON.parse(localStorage.getItem('users') || '[]');
-    setMemberCount(users.length);
+    // Fetch ONLY the number of members for better performance
+    const fetchMemberCount = async () => {
+      try {
+        const response = await fetch(`${API_URL}/api/users/count`);
+        if (response.ok) {
+          const data = await response.json();
+          // Use the count property from the new backend route
+          setMemberCount(data.count || 0);
+        }
+      } catch (err) {
+        console.error("Failed to fetch member count:", err);
+        setMemberCount(0);
+      }
+    };
+
+    fetchMemberCount();
   }, []);
 
   return (
@@ -24,14 +39,14 @@ export default function Home() {
         </div>
 
         <h1 className="text-7xl font-black text-white tracking-tighter uppercase italic leading-none">
-          Engineering Pioneers Club
+           Engineering Pioneers Club
         </h1>
 
         <div className="max-w-3xl mx-auto glass-card p-10 relative overflow-hidden group">
           <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-cyan-400 to-transparent opacity-30"></div>
           
           <p className="text-slate-300 text-xl leading-relaxed font-light tracking-wide">
-            "Elevate Your Community. A premium private space for creators. Experience high-performance interaction with a frosted glass interface."
+             "Elevate Your Community. A premium private space for creators. Experience high-performance interaction with a frosted glass interface."
           </p>
           
           <div className="mt-8 pt-8 border-t border-white/10 flex flex-col items-center gap-2">
@@ -61,7 +76,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* --- FULL EVENTS ARCHIVE --- */}
+      {/* --- EVENTS ARCHIVE --- */}
       <section className="space-y-20 px-4 max-w-6xl mx-auto">
         <div className="text-center">
           <h2 className="text-5xl font-black text-white uppercase tracking-tighter">Archive of Impact</h2>
@@ -132,9 +147,9 @@ export default function Home() {
         <div className="max-w-6xl mx-auto grid md:grid-cols-4 gap-16 mb-24 text-left">
           <div className="col-span-2 space-y-8">
             <div className="flex items-center gap-4 group cursor-default">
-               <img src="/logo.png" className="w-14 h-14 grayscale brightness-200 group-hover:grayscale-0 transition-all duration-500" alt="Footer Logo" />
-               <div className="h-10 w-[1px] bg-white/10"></div>
-               <span className="text-2xl font-black tracking-tighter text-white uppercase italic">EPC ENPO-MA</span>
+                <img src="/logo.png" className="w-14 h-14 grayscale brightness-200 group-hover:grayscale-0 transition-all duration-500" alt="Footer Logo" />
+                <div className="h-10 w-[1px] bg-white/10"></div>
+                <span className="text-2xl font-black tracking-tighter text-white uppercase italic">EPC ENPO-MA</span>
             </div>
             <p className="text-slate-500 max-w-sm leading-loose text-sm font-light">
               The leading catalyst for student innovation in Algeria. Inspiring a community of pioneers technically proficient and socially conscious.
