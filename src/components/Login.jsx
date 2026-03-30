@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 export default function Login({ setPage }) {
   const [email, setEmail] = useState('');
@@ -10,23 +10,27 @@ export default function Login({ setPage }) {
 
   const API_URL = "https://api-myapp.onrender.com";
 
+  // Optional: Auto-redirect after 2 seconds of success
+  useEffect(() => {
+    if (isSuccess) {
+      const timer = setTimeout(() => {
+        setPage('posts');
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [isSuccess, setPage]);
+
   const handleLogin = async (e) => {
     e.preventDefault();
     setErrorMessage('');
     setLoading(true);
-
-    if (!email || !password) {
-      setErrorMessage("Please enter both email and password.");
-      setLoading(false);
-      return;
-    }
 
     try {
       const response = await fetch(`${API_URL}/api/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
-          email: email.toLowerCase().trim(), 
+          email: email.toLowerCase().trim(),
           password: password 
         }),
       });
@@ -37,14 +41,14 @@ export default function Login({ setPage }) {
         throw new Error(data.message || "Login failed.");
       }
 
-      // 1. Save user to localStorage
+      // 1. Save to localStorage
       localStorage.setItem('currentUser', JSON.stringify(data));
       
-      // 2. Notify App.jsx immediately so Navbar updates
+      // 2. Dispatch event so App.jsx catches it
       window.dispatchEvent(new Event('storage'));
 
       setLoggedInUsername(data.username);
-      setIsSuccess(true);
+      setIsSuccess(true); 
 
     } catch (err) {
       setErrorMessage(err.message);
@@ -57,18 +61,18 @@ export default function Login({ setPage }) {
     return (
       <div className="max-w-md mx-auto glass-card p-12 mt-10 animate-fade-in text-center flex flex-col items-center border border-white/5 bg-[#1e293b]/50 backdrop-blur-xl rounded-[2rem]">
         <div className="p-6 mb-6 rounded-full bg-cyan-500/10 ring-2 ring-cyan-500/20 shadow-inner">
-          {/* IMAGE FIXED: Points to /public/correct_login.png */}
-          <img src="/correct_login.png" alt="Success" className="w-24 h-24 object-contain" />
+          <img 
+            src="/correct_login.png" 
+            alt="Success" 
+            className="w-24 h-24 object-contain" 
+          />
         </div>
         <h2 className="text-3xl font-black text-white italic uppercase tracking-tighter">Welcome Back!</h2>
         <p className="text-slate-400 mt-2 mb-8 font-medium">
           Authorized as <span className="text-cyan-500">{loggedInUsername}</span>
         </p>
         <button 
-          onClick={() => {
-            // REDIRECT FIXED: Now goes straight to the Feed
-            setPage('posts'); 
-          }} 
+          onClick={() => setPage('posts')} 
           className="bg-cyan-500 hover:bg-cyan-400 text-black w-full py-4 text-xs tracking-widest font-black uppercase rounded-xl transition-all shadow-lg shadow-cyan-500/20"
         >
           CONTINUE TO FEED
@@ -93,7 +97,7 @@ export default function Login({ setPage }) {
           <label className="text-[10px] font-black text-slate-400 ml-1 uppercase tracking-widest">Email Address</label>
           <input 
             type="email" 
-            placeholder="name@domain.com" 
+            placeholder="name@domain.com"
             className="w-full p-4 mt-1 rounded-xl bg-white/5 border border-white/10 text-white outline-none focus:border-cyan-500 transition-all font-bold" 
             value={email}
             onChange={(e) => setEmail(e.target.value)}
@@ -106,7 +110,7 @@ export default function Login({ setPage }) {
           <label className="text-[10px] font-black text-slate-400 ml-1 uppercase tracking-widest">Password</label>
           <input 
             type="password" 
-            placeholder="••••••••" 
+            placeholder="••••••••"
             className="w-full p-4 mt-1 rounded-xl bg-white/5 border border-white/10 text-white outline-none focus:border-cyan-500 transition-all font-bold" 
             value={password}
             onChange={(e) => setPassword(e.target.value)}
@@ -118,7 +122,7 @@ export default function Login({ setPage }) {
         <button 
           type="submit" 
           disabled={loading}
-          className={`bg-cyan-500 hover:bg-cyan-400 text-black w-full py-4 mt-4 text-xs tracking-[0.2em] font-black uppercase shadow-lg shadow-cyan-500/10 rounded-xl transition-all transform active:scale-[0.98] ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
+          className={`bg-cyan-500 hover:bg-cyan-400 text-black w-full py-4 mt-4 text-xs tracking-[0.2em] font-black uppercase shadow-lg shadow-cyan-500/10 rounded-xl transition-all transform active:scale-[0.98] ${loading ? 'opacity-50' : ''}`}
         >
           {loading ? 'Verifying Credentials...' : 'Authorize Login'}
         </button>
