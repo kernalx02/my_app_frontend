@@ -3,7 +3,6 @@ import React, { useState } from 'react';
 export default function Feed({ posts, handleVote, currentUser, handleComment, handleCommentLike }) {
   const [commentTexts, setCommentTexts] = useState({});
 
-  // Ensure we sort based on the MongoDB _id and handle empty ups/downs
   const sortedPosts = [...posts].sort((a, b) => {
     const scoreA = (a.ups?.length || 0) - (a.downs?.length || 0);
     const scoreB = (b.ups?.length || 0) - (b.downs?.length || 0);
@@ -27,7 +26,6 @@ export default function Feed({ posts, handleVote, currentUser, handleComment, ha
         <p className="text-center text-slate-500 italic animate-fade-in">No posts yet. Start the conversation!</p>
       ) : (
         sortedPosts.map((post, index) => {
-          // IMPORTANT: MongoDB uses _id. We check for both just in case.
           const postId = post._id || post.id;
           const isUpvoted = post.ups?.includes(currentUser?.username);
           const isDownvoted = post.downs?.includes(currentUser?.username);
@@ -43,7 +41,6 @@ export default function Feed({ posts, handleVote, currentUser, handleComment, ha
                 animationFillMode: 'forwards' 
               }}
             >
-              {/* Header */}
               <div className="flex items-center gap-3 border-b border-white/5 pb-4">
                 <div className="w-10 h-10 rounded-full bg-cyan-500/20 border border-cyan-500/40 flex items-center justify-center overflow-hidden font-bold text-xs text-cyan-400">
                   {post.username?.charAt(0).toUpperCase()}
@@ -51,7 +48,6 @@ export default function Feed({ posts, handleVote, currentUser, handleComment, ha
                 <span className="text-xs font-black uppercase tracking-widest text-slate-400">{post.username}</span>
               </div>
 
-              {/* Content */}
               <p className="text-slate-200 text-lg leading-relaxed">{post.content}</p>
 
               {post.image && (
@@ -64,7 +60,6 @@ export default function Feed({ posts, handleVote, currentUser, handleComment, ha
                 </div>
               )}
 
-              {/* Voting Bar */}
               <div className="flex justify-end items-center pt-2 border-b border-white/5 pb-4">
                 <div className="flex items-center gap-4 bg-black/40 px-5 py-2 rounded-full border border-white/5">
                   <button 
@@ -81,11 +76,12 @@ export default function Feed({ posts, handleVote, currentUser, handleComment, ha
                 </div>
               </div>
 
-              {/* --- COMMENTS SECTION --- */}
               <div className="mt-2 space-y-4">
                 <div className="max-h-60 overflow-y-auto space-y-3 pr-2 custom-scrollbar">
                   {post.comments?.map((comment, cIndex) => {
-                    const isLiked = comment.likes?.includes(currentUser?.username);
+                    // FIX: Ensure likes is an array to prevent .includes crash
+                    const likesArr = comment.likes || [];
+                    const isLiked = likesArr.includes(currentUser?.username);
                     return (
                       <div key={cIndex} className="bg-white/5 rounded-2xl p-3 border border-white/5 flex justify-between items-start animate-fade-in">
                         <div className="flex flex-col gap-1">
@@ -96,14 +92,13 @@ export default function Feed({ posts, handleVote, currentUser, handleComment, ha
                           onClick={() => handleCommentLike(postId, cIndex)}
                           className={`text-xs transition-all ${isLiked ? 'text-red-500 scale-110' : 'text-slate-600 hover:text-red-400'}`}
                         >
-                          {isLiked ? '❤️' : '🤍'} <span className="ml-1 font-mono">{comment.likes?.length || 0}</span>
+                          {isLiked ? '❤️' : '🤍'} <span className="ml-1 font-mono">{likesArr.length}</span>
                         </button>
                       </div>
                     );
                   })}
                 </div>
 
-                {/* Comment Input */}
                 <form onSubmit={(e) => onCommentSubmit(e, postId)} className="flex gap-2 mt-4">
                   <input 
                     type="text"
