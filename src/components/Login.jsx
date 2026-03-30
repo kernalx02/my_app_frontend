@@ -8,7 +8,7 @@ export default function Login({ setPage }) {
   const [loggedInUsername, setLoggedInUsername] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // Your specific Render URL
+  // Ensure this matches your Render backend URL exactly
   const API_URL = "https://api-myapp.onrender.com";
 
   const handleLogin = async (e) => {
@@ -27,7 +27,7 @@ export default function Login({ setPage }) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
-          email: email.toLowerCase(), 
+          email: email.toLowerCase().trim(), // Added .trim() to prevent space errors
           password: password 
         }),
       });
@@ -35,11 +35,17 @@ export default function Login({ setPage }) {
       const data = await response.json();
 
       if (!response.ok) {
+        // If the server says "Unauthorized", this will catch it
         throw new Error(data.message || "Login failed.");
       }
 
-      // Save user to session
+      // 1. Save user to localStorage
+      // We ensure the data object has 'id' (mapped from _id in server.js)
       localStorage.setItem('currentUser', JSON.stringify(data));
+      
+      // 2. Notify other components (Navbar, Profile) that the user changed
+      window.dispatchEvent(new Event('storage'));
+
       setLoggedInUsername(data.username);
       setIsSuccess(true);
 
@@ -54,15 +60,22 @@ export default function Login({ setPage }) {
     return (
       <div className="max-w-md mx-auto glass-card p-12 mt-10 animate-fade-in text-center flex flex-col items-center">
         <div className="p-6 mb-6 rounded-full bg-cyan-500/10 ring-2 ring-cyan-500/20 shadow-inner">
-          <img src="/correct_login.png" alt="Success" className="w-24 h-24 object-contain" />
+           {/* If you don't have this image file, you can replace this with an icon or <span>✅</span> */}
+          <div className="text-5xl">✅</div>
         </div>
         <h2 className="text-3xl font-black text-white italic uppercase tracking-tighter">Welcome Back!</h2>
         <p className="text-slate-400 mt-2 mb-8 font-medium">
           Authorized as <span className="text-cyan-500">{loggedInUsername}</span>
         </p>
         <button 
-          onClick={() => window.location.reload()} 
-          className="btn-cyan w-full py-4 text-xs tracking-widest font-black uppercase"
+          onClick={() => {
+            // Option A: Hard refresh (Works but slower)
+            // window.location.reload(); 
+            
+            // Option B: Soft transition (Better UX)
+            setPage('home'); 
+          }} 
+          className="bg-cyan-500 hover:bg-cyan-400 text-black w-full py-4 text-xs tracking-widest font-black uppercase rounded-xl transition-all shadow-lg shadow-cyan-500/20"
         >
           CONTINUE TO DASHBOARD
         </button>
@@ -71,12 +84,12 @@ export default function Login({ setPage }) {
   }
 
   return (
-    <div className="max-w-md mx-auto glass-card p-12 mt-10 animate-fade-in border border-white/5">
+    <div className="max-w-md mx-auto glass-card p-12 mt-10 animate-fade-in border border-white/5 bg-[#1e293b]/50 backdrop-blur-xl rounded-[2rem]">
       <h2 className="text-3xl font-black mb-2 text-white italic uppercase tracking-tighter">Log In</h2>
       <p className="text-slate-500 text-sm mb-8 font-medium uppercase tracking-widest">Identify Protocol Required</p>
       
       {errorMessage && (
-        <div className="bg-red-500/10 border border-red-500/20 text-red-400 p-4 mb-6 text-[10px] font-black rounded-xl animate-shake flex items-center gap-2">
+        <div className="bg-red-500/10 border border-red-500/20 text-red-400 p-4 mb-6 text-[10px] font-black rounded-xl flex items-center gap-2">
           <span>⚠️</span> {errorMessage}
         </div>
       )}
@@ -87,7 +100,7 @@ export default function Login({ setPage }) {
           <input 
             type="email" 
             placeholder="name@domain.com" 
-            className="input mt-1" 
+            className="w-full p-4 mt-1 rounded-xl bg-white/5 border border-white/10 text-white outline-none focus:border-cyan-500 transition-all font-bold" 
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
@@ -100,7 +113,7 @@ export default function Login({ setPage }) {
           <input 
             type="password" 
             placeholder="••••••••" 
-            className="input mt-1" 
+            className="w-full p-4 mt-1 rounded-xl bg-white/5 border border-white/10 text-white outline-none focus:border-cyan-500 transition-all font-bold" 
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
@@ -111,9 +124,9 @@ export default function Login({ setPage }) {
         <button 
           type="submit" 
           disabled={loading}
-          className={`btn-cyan w-full py-4 mt-4 text-xs tracking-[0.2em] font-black uppercase shadow-lg ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
+          className={`bg-cyan-500 hover:bg-cyan-400 text-black w-full py-4 mt-4 text-xs tracking-[0.2em] font-black uppercase shadow-lg shadow-cyan-500/10 rounded-xl transition-all transform active:scale-[0.98] ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
         >
-          {loading ? 'Verifying...' : 'Authorize Login'}
+          {loading ? 'Verifying Credentials...' : 'Authorize Login'}
         </button>
         
         <p className="text-center text-[10px] text-slate-500 mt-6 uppercase font-bold tracking-tighter">
