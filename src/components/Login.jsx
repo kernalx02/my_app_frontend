@@ -8,7 +8,6 @@ export default function Login({ setPage }) {
   const [loggedInUsername, setLoggedInUsername] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // Ensure this matches your Render backend URL exactly
   const API_URL = "https://api-myapp.onrender.com";
 
   const handleLogin = async (e) => {
@@ -27,7 +26,7 @@ export default function Login({ setPage }) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
-          email: email.toLowerCase().trim(), // Added .trim() to prevent space errors
+          email: email.toLowerCase().trim(),
           password: password 
         }),
       });
@@ -35,19 +34,19 @@ export default function Login({ setPage }) {
       const data = await response.json();
 
       if (!response.ok) {
-        // If the server says "Unauthorized", this will catch it
         throw new Error(data.message || "Login failed.");
       }
 
       // 1. Save user to localStorage
-      // We ensure the data object has 'id' (mapped from _id in server.js)
       localStorage.setItem('currentUser', JSON.stringify(data));
       
-      // 2. Notify other components (Navbar, Profile) that the user changed
+      // 2. Notify other components
       window.dispatchEvent(new Event('storage'));
 
       setLoggedInUsername(data.username);
-      setIsSuccess(true);
+      
+      // FIX: Immediate redirect instead of waiting
+      setPage('home'); 
 
     } catch (err) {
       setErrorMessage(err.message);
@@ -56,25 +55,20 @@ export default function Login({ setPage }) {
     }
   };
 
+  // SUCCESS STATE (In case setPage('home') takes a split second to render)
   if (isSuccess) {
     return (
       <div className="max-w-md mx-auto glass-card p-12 mt-10 animate-fade-in text-center flex flex-col items-center">
         <div className="p-6 mb-6 rounded-full bg-cyan-500/10 ring-2 ring-cyan-500/20 shadow-inner">
-           {/* If you don't have this image file, you can replace this with an icon or <span>✅</span> */}
-          <div className="text-5xl">✅</div>
+          {/* FIX: Using your local image here */}
+          <img src="/correct_login.png" alt="Success" className="w-20 h-20 object-contain" />
         </div>
         <h2 className="text-3xl font-black text-white italic uppercase tracking-tighter">Welcome Back!</h2>
         <p className="text-slate-400 mt-2 mb-8 font-medium">
           Authorized as <span className="text-cyan-500">{loggedInUsername}</span>
         </p>
         <button 
-          onClick={() => {
-            // Option A: Hard refresh (Works but slower)
-            // window.location.reload(); 
-            
-            // Option B: Soft transition (Better UX)
-            setPage('home'); 
-          }} 
+          onClick={() => setPage('home')} 
           className="bg-cyan-500 hover:bg-cyan-400 text-black w-full py-4 text-xs tracking-widest font-black uppercase rounded-xl transition-all shadow-lg shadow-cyan-500/20"
         >
           CONTINUE TO DASHBOARD
