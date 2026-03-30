@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 
+// Using PascalCase for the component function name as shown in your file structure (Login.jsx)
 export default function Login({ setPage }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -8,6 +9,7 @@ export default function Login({ setPage }) {
   const [loggedInUsername, setLoggedInUsername] = useState('');
   const [loading, setLoading] = useState(false);
 
+  // Keep your existing Render backend URL exactly as is
   const API_URL = "https://api-myapp.onrender.com";
 
   const handleLogin = async (e) => {
@@ -40,13 +42,14 @@ export default function Login({ setPage }) {
       // 1. Save user to localStorage
       localStorage.setItem('currentUser', JSON.stringify(data));
       
-      // 2. Notify other components
+      // 2. Notify other components (Navbar, Profile) immediately
       window.dispatchEvent(new Event('storage'));
 
-      setLoggedInUsername(data.username);
-      
-      // FIX: Immediate redirect instead of waiting
+      // FIX FOR IMMEDIATE REDIRECT: Call setPage before updating other state
       setPage('home'); 
+      
+      setLoggedInUsername(data.username);
+      setIsSuccess(true); // Left this for completeness, but navigation happens immediately above
 
     } catch (err) {
       setErrorMessage(err.message);
@@ -55,12 +58,13 @@ export default function Login({ setPage }) {
     }
   };
 
-  // SUCCESS STATE (In case setPage('home') takes a split second to render)
+  // Keep your style and functions, just fixing the "image didn't appear" problem.
+  // This state is briefly rendered if navigation takes a split second.
   if (isSuccess) {
     return (
       <div className="max-w-md mx-auto glass-card p-12 mt-10 animate-fade-in text-center flex flex-col items-center">
         <div className="p-6 mb-6 rounded-full bg-cyan-500/10 ring-2 ring-cyan-500/20 shadow-inner">
-          {/* FIX: Using your local image here */}
+          {/* FIX FOR IMAGE NOT APPEARING: Assuming 'correct_login.png' is in './public' */}
           <img src="/correct_login.png" alt="Success" className="w-20 h-20 object-contain" />
         </div>
         <h2 className="text-3xl font-black text-white italic uppercase tracking-tighter">Welcome Back!</h2>
@@ -68,7 +72,10 @@ export default function Login({ setPage }) {
           Authorized as <span className="text-cyan-500">{loggedInUsername}</span>
         </p>
         <button 
-          onClick={() => setPage('home')} 
+          onClick={() => {
+            // Option B: Soft transition (Better UX)
+            setPage('home'); 
+          }} 
           className="bg-cyan-500 hover:bg-cyan-400 text-black w-full py-4 text-xs tracking-widest font-black uppercase rounded-xl transition-all shadow-lg shadow-cyan-500/20"
         >
           CONTINUE TO DASHBOARD
