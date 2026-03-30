@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 export default function Feed({ posts, handleVote, currentUser, handleComment, handleCommentLike }) {
   const [commentTexts, setCommentTexts] = useState({});
 
+  // Ensure we sort based on the MongoDB _id and handle empty ups/downs
   const sortedPosts = [...posts].sort((a, b) => {
     const scoreA = (a.ups?.length || 0) - (a.downs?.length || 0);
     const scoreB = (b.ups?.length || 0) - (b.downs?.length || 0);
@@ -26,13 +27,15 @@ export default function Feed({ posts, handleVote, currentUser, handleComment, ha
         <p className="text-center text-slate-500 italic animate-fade-in">No posts yet. Start the conversation!</p>
       ) : (
         sortedPosts.map((post, index) => {
+          // IMPORTANT: MongoDB uses _id. We check for both just in case.
+          const postId = post._id || post.id;
           const isUpvoted = post.ups?.includes(currentUser?.username);
           const isDownvoted = post.downs?.includes(currentUser?.username);
           const score = (post.ups?.length || 0) - (post.downs?.length || 0);
 
           return (
             <div 
-              key={post._id || post.id} 
+              key={postId} 
               className="glass-card p-6 flex flex-col gap-4 border border-white/5 shadow-2xl bg-white/5 rounded-3xl animate-slide-up"
               style={{ 
                 animationDelay: `${index * 0.1}s`,
@@ -55,8 +58,7 @@ export default function Feed({ posts, handleVote, currentUser, handleComment, ha
                 <div className="flex justify-center">
                   <img 
                     src={post.image} 
-                    style={{ width: post.width ? `${post.width}px` : '100%' }} 
-                    className="rounded-2xl border border-white/10 shadow-lg object-contain"
+                    className="rounded-2xl border border-white/10 shadow-lg object-contain w-full"
                     alt="Post content" 
                   />
                 </div>
@@ -67,14 +69,14 @@ export default function Feed({ posts, handleVote, currentUser, handleComment, ha
                 <div className="flex items-center gap-4 bg-black/40 px-5 py-2 rounded-full border border-white/5">
                   <button 
                     className={`transition-all font-bold ${isUpvoted ? 'text-orange-500 scale-125' : 'text-slate-500 hover:text-orange-400'}`} 
-                    onClick={() => handleVote(post._id || post.id, 'up')}
+                    onClick={() => handleVote(postId, 'up')}
                   > ▲ </button>
                   <span className={`font-mono font-bold text-sm ${isUpvoted ? 'text-orange-500' : isDownvoted ? 'text-indigo-400' : 'text-white'}`}>
                     {score}
                   </span>
                   <button 
                     className={`transition-all font-bold ${isDownvoted ? 'text-indigo-500 scale-125' : 'text-slate-500 hover:text-indigo-400'}`} 
-                    onClick={() => handleVote(post._id || post.id, 'down')}
+                    onClick={() => handleVote(postId, 'down')}
                   > ▼ </button>
                 </div>
               </div>
@@ -91,7 +93,7 @@ export default function Feed({ posts, handleVote, currentUser, handleComment, ha
                           <p className="text-sm text-slate-300">{comment.text}</p>
                         </div>
                         <button 
-                          onClick={() => handleCommentLike(post._id || post.id, cIndex)}
+                          onClick={() => handleCommentLike(postId, cIndex)}
                           className={`text-xs transition-all ${isLiked ? 'text-red-500 scale-110' : 'text-slate-600 hover:text-red-400'}`}
                         >
                           {isLiked ? '❤️' : '🤍'} <span className="ml-1 font-mono">{comment.likes?.length || 0}</span>
@@ -102,13 +104,13 @@ export default function Feed({ posts, handleVote, currentUser, handleComment, ha
                 </div>
 
                 {/* Comment Input */}
-                <form onSubmit={(e) => onCommentSubmit(e, post._id || post.id)} className="flex gap-2 mt-4">
+                <form onSubmit={(e) => onCommentSubmit(e, postId)} className="flex gap-2 mt-4">
                   <input 
                     type="text"
                     placeholder="Write a comment..."
                     className="input-mini bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-sm text-white w-full outline-none focus:border-cyan-500/50 transition-colors"
-                    value={commentTexts[post._id || post.id] || ''}
-                    onChange={(e) => setCommentTexts({...commentTexts, [post._id || post.id]: e.target.value})}
+                    value={commentTexts[postId] || ''}
+                    onChange={(e) => setCommentTexts({...commentTexts, [postId]: e.target.value})}
                   />
                   <button type="submit" className="bg-cyan-500 hover:bg-cyan-400 text-black font-black text-[10px] px-4 rounded-xl uppercase tracking-widest transition-all">
                     Post

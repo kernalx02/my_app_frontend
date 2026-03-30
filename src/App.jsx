@@ -35,38 +35,26 @@ export default function App() {
     }
   };
 
+  // --- ADDED API LOGIC TO HANDLE VOTE ---
   const handleVote = async (id, type) => {
     if (!currentUser) return alert("Please log in to vote!");
-    
-    // Note: You may need a /api/posts/:id/vote route in server.js 
-    // For now, this handles local state update for immediate feedback
-    const userId = currentUser.username;
-    const updatedPosts = posts.map(p => {
-      const postId = p._id || p.id;
-      if (postId === id) {
-        let ups = Array.isArray(p.ups) ? p.ups : [];
-        let downs = Array.isArray(p.downs) ? p.downs : [];
 
-        if (type === 'up') {
-          if (ups.includes(userId)) {
-            ups = ups.filter(name => name !== userId);
-          } else {
-            ups = [...ups, userId];
-            downs = downs.filter(name => name !== userId);
-          }
-        } else {
-          if (downs.includes(userId)) {
-            downs = downs.filter(name => name !== userId);
-          } else {
-            downs = [...downs, userId];
-            ups = ups.filter(name => name !== userId);
-          }
-        }
-        return { ...p, ups, downs };
+    try {
+      const response = await fetch(`${API_URL}/api/posts/${id}/vote`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          username: currentUser.username, 
+          voteType: type 
+        }),
+      });
+
+      if (response.ok) {
+        refreshPosts(); // Updates UI with new vote counts from DB
       }
-      return p;
-    });
-    setPosts(updatedPosts);
+    } catch (err) {
+      console.error("Voting error:", err);
+    }
   };
 
   const handleComment = async (postId, text) => {
@@ -83,7 +71,7 @@ export default function App() {
       });
 
       if (response.ok) {
-        refreshPosts(); // Reload posts to show the new comment
+        refreshPosts(); 
       }
     } catch (err) {
       console.error("Error posting comment:", err);
@@ -101,7 +89,7 @@ export default function App() {
       });
 
       if (response.ok) {
-        refreshPosts(); // Reload posts to show the heart update
+        refreshPosts(); 
       }
     } catch (err) {
       console.error("Error liking comment:", err);
