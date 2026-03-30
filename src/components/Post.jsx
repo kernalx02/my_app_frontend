@@ -6,6 +6,7 @@ export default function Post({ setPage, onPostCreated }) {
   const [isSaving, setIsSaving] = useState(false);
   
   const user = JSON.parse(localStorage.getItem('currentUser') || '{}');
+  const API_URL = "https://api-myapp.onrender.com"; // <--- Update this to your Render URL
 
   // --- CLOUDINARY UPLOAD LOGIC ---
   const handleCloudinaryUpload = () => {
@@ -17,11 +18,10 @@ export default function Post({ setPage, onPostCreated }) {
     window.cloudinary.openUploadWidget(
       {
         cloudName: 'dlpy314z4', 
-        uploadPreset: 'posts_upload', // Make sure this is "Unsigned" in settings
+        uploadPreset: 'posts_upload',
         sources: ['local', 'url', 'camera'],
         multiple: false,
         cropping: true, 
-        // We remove "croppingAspectRatio: 1" so they can upload any shape!
         styles: {
           palette: {
             window: '#1e293b',
@@ -42,34 +42,47 @@ export default function Post({ setPage, onPostCreated }) {
       },
       (error, result) => {
         if (!error && result && result.event === "success") {
-          setImage(result.info.secure_url); // Store the clean URL
+          setImage(result.info.secure_url);
         }
       }
     );
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if(!image || !caption) return alert("Please fill everything!");
     setIsSaving(true);
 
     const newPost = {
-      id: Date.now(),
       username: user.username || "Guest",
       profilePic: user.profilePic || null,
       content: caption,
-      image: image, // This is now a short URL!
+      image: image, 
       ups: [],
-      downs: []
+      downs: [],
+      comments: []
     };
 
-    const allPosts = JSON.parse(localStorage.getItem('posts') || '[]');
-    localStorage.setItem('posts', JSON.stringify([newPost, ...allPosts]));
+    try {
+      const response = await fetch(`${API_URL}/api/posts`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newPost),
+      });
 
-    if (onPostCreated) onPostCreated();
-
-    setTimeout(() => {
-      setPage('posts');
-    }, 800);
+      if (response.ok) {
+        if (onPostCreated) onPostCreated(); // Triggers refreshPosts in App.jsx
+        setTimeout(() => {
+          setPage('posts');
+        }, 500);
+      } else {
+        alert("Failed to save to database.");
+        setIsSaving(false);
+      }
+    } catch (err) {
+      console.error("Save error:", err);
+      alert("Database connection failed.");
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -105,7 +118,6 @@ export default function Post({ setPage, onPostCreated }) {
           </button>
         </div>
 
-        {/* Live Preview Section */}
         <div className="flex flex-col items-center justify-center space-y-6">
            <h3 className="text-white font-bold uppercase text-xs tracking-[0.3em] opacity-40">Live Preview</h3>
            {image ? (
@@ -114,7 +126,7 @@ export default function Post({ setPage, onPostCreated }) {
              </div>
            ) : (
              <div className="w-64 h-64 border border-white/5 rounded-3xl flex items-center justify-center bg-white/5 italic text-slate-600 text-center p-4">
-               Waiting for image...
+                Waiting for image...
              </div>
            )}
         </div>
