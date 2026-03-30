@@ -17,27 +17,20 @@ export default function App() {
   // --- CONFIG ---
   const API_URL = "https://api-myapp.onrender.com";
 
-  // 1. Initial Load Logic
   useEffect(() => {
     const user = localStorage.getItem('currentUser');
     if (user) setCurrentUser(JSON.parse(user));
     refreshPosts();
   }, []);
 
-  // --- FIX: LISTEN FOR LOGIN EVENT WITHOUT RELOAD ---
+  // --- FIX: LISTEN FOR LOGIN WITHOUT RELOAD ---
   useEffect(() => {
-    const handleStorageChange = () => {
+    const handleSync = () => {
       const user = localStorage.getItem('currentUser');
-      if (user) {
-        setCurrentUser(JSON.parse(user));
-      } else {
-        setCurrentUser(null);
-      }
+      setCurrentUser(user ? JSON.parse(user) : null);
     };
-
-    // Listen for the custom 'storage' event dispatched by Login.jsx
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
+    window.addEventListener('storage', handleSync);
+    return () => window.removeEventListener('storage', handleSync);
   }, []);
 
   // --- DATABASE ACTIONS ---
