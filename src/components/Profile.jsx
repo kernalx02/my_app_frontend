@@ -7,6 +7,9 @@ export default function Profile() {
   const [message, setMessage] = useState({ type: '', text: '' });
   const [copied, setCopied] = useState(false);
 
+  // Update this to your real Render URL
+  const API_URL = "https://api-myapp.onrender.com";
+
   // Load user on mount
   useEffect(() => {
     const currentUser = JSON.parse(localStorage.getItem('currentUser'));
@@ -62,47 +65,54 @@ export default function Profile() {
   };
 
   const copyId = () => {
-    const displayId = user.id || "00" + user.username.length + "XP";
+    const displayId = user._id || "ID_PENDING";
     navigator.clipboard.writeText(displayId.toString());
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const handleSave = (e) => {
+  // --- UPDATED SAVE TO DATABASE ---
+  const handleSave = async (e) => {
     e.preventDefault();
-    const allUsers = JSON.parse(localStorage.getItem('users') || '[]');
-    
-    const isTaken = allUsers.some(
-      (u) => u.username.toLowerCase() === newUsername.toLowerCase() && String(u.id) !== String(user.id)
-    );
+    setMessage({ type: '', text: 'Updating cloud profile...' });
 
-    if (isTaken) {
-      setMessage({ type: 'error', text: 'Username taken by another member.' });
-      return;
+    try {
+      const response = await fetch(`${API_URL}/api/users/${user._id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username: newUsername,
+          profilePic: profilePic
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Update failed');
+      }
+
+      // Update State and Sync LocalStorage for the Navbar/Feed
+      setUser(data);
+      localStorage.setItem('currentUser', JSON.stringify(data));
+      window.dispatchEvent(new Event('storage'));
+      
+      setMessage({ type: 'success', text: 'Identity Updated Successfully!' });
+    } catch (err) {
+      setMessage({ type: 'error', text: err.message });
     }
-
-    const updated = { ...user, username: newUsername, profilePic: profilePic };
-    const updatedUsersList = allUsers.map(u => String(u.id) === String(user.id) ? updated : u);
     
-    localStorage.setItem('users', JSON.stringify(updatedUsersList));
-    localStorage.setItem('currentUser', JSON.stringify(updated));
-    
-    setUser(updated);
-    window.dispatchEvent(new Event('storage'));
-    
-    setMessage({ type: 'success', text: 'Profile Updated!' });
-    setTimeout(() => setMessage({ type: '', text: '' }), 3000);
+    setTimeout(() => setMessage({ type: '', text: '' }), 4000);
   };
 
   if (!user) return null;
 
   const isOwner = user.username?.toLowerCase() === "taha";
-  const displayId = user.id || "00" + user.username.length + "XP";
+  const displayId = user._id || "ID_PENDING";
 
   return (
     <div className="max-w-2xl mx-auto glass-card p-12 mt-10 fade-in relative border border-white/5 bg-[#1e293b]/50 backdrop-blur-xl rounded-[2rem]">
       <div className="flex flex-col sm:flex-row items-center gap-8 mb-12">
-        {/* Profile Picture Upload Section */}
         <div className="relative group">
           <div className={`w-32 h-32 rounded-full overflow-hidden border-4 shadow-xl transition-all ${isOwner ? 'border-cyan-500 shadow-cyan-500/20' : 'border-cyan-500/20 group-hover:border-cyan-400'}`}>
             <img 
@@ -111,7 +121,6 @@ export default function Profile() {
               alt="Profile" 
             />
           </div>
-          {/* Professional Overlay */}
           <div 
             onClick={handleCloudinaryUpload}
             className="absolute inset-0 flex items-center justify-center bg-black/60 rounded-full opacity-0 group-hover:opacity-100 cursor-pointer transition-all"
@@ -126,7 +135,7 @@ export default function Profile() {
           </h2>
           <div className="flex items-center gap-2 mt-2">
             <span className={`text-[10px] font-black uppercase tracking-[0.2em] px-2 py-1 rounded ${isOwner ? 'bg-cyan-500 text-black' : 'bg-cyan-500/10 text-cyan-500'}`}>
-              {isOwner ? 'Owner' : (user.role || 'Member')}
+              {user.role || 'Member'}
             </span>
             {isOwner && <span className="text-cyan-400 text-xs font-bold">✓ Verified Access</span>}
           </div>
@@ -135,11 +144,11 @@ export default function Profile() {
 
       <form onSubmit={handleSave} className="space-y-6">
         <div>
-          <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Account Serial (Permanent)</label>
+          <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Database UUID (Permanent)</label>
           <div className="flex gap-2 mt-1">
             <input 
               type="text" 
-              className="w-full p-3 rounded-xl bg-slate-900/50 text-slate-500 border border-white/5 outline-none cursor-not-allowed opacity-70 font-mono text-sm" 
+              className="w-full p-3 rounded-xl bg-slate-900/50 text-slate-500 border border-white/5 outline-none cursor-not-allowed opacity-70 font-mono text-xs" 
               value={displayId} 
               readOnly 
             />
@@ -169,7 +178,7 @@ export default function Profile() {
           type="submit" 
           className="bg-cyan-500 hover:bg-cyan-400 text-black w-full py-4 rounded-xl text-xs font-black uppercase tracking-[0.2em] shadow-lg shadow-cyan-500/10 transition-all transform active:scale-[0.98]"
         >
-          Update Identity
+          Update Cloud Identity
         </button>
       </form>
 
