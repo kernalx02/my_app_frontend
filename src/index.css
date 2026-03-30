@@ -1,0 +1,231 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* === 1. THEME VARIABLES === */
+:root {
+  --bg-main: #020617;
+  --glass-fill: rgba(15, 23, 42, 0.4);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --cyan-primary: #22d3ee;
+  --cyan-glow: rgba(34, 211, 238, 0.3);
+  --text-main: #f8fafc;
+  --text-muted: #94a3b8;
+  --font-main: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+/* === 2. GLOBAL STYLES === */
+body {
+  background: radial-gradient(circle at top center, #1e293b 0%, #020617 100%);
+  color: var(--text-main);
+  font-family: var(--font-main);
+  margin: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* === 3. REFINED NAVBAR (Glass Effect) === */
+.navbar {
+  background: var(--glass-fill);
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  border: 1px solid var(--glass-border);
+  box-shadow: 0 10px 30px -10px rgba(0,0,0,0.6);
+  border-radius: 18px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* === 4. NAVIGATION LINKS === */
+.nav-link {
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  color: var(--text-muted);
+  transition: all 0.2s ease;
+  padding: 8px 16px;
+  border-radius: 10px;
+}
+
+.nav-link:hover {
+  color: var(--cyan-primary);
+  background: rgba(34, 211, 238, 0.05);
+}
+
+.nav-link.active {
+  color: #fff;
+  font-weight: 600;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+/* === 5. PREMIUM BUTTONS === */
+.btn-cyan {
+  background: linear-gradient(135deg, #22d3ee 0%, #0ea5e9 100%);
+  color: #020617;
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: 0.01em;
+  padding: 10px 24px;
+  border-radius: 12px;
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: 0 4px 12px var(--cyan-glow);
+}
+
+.btn-cyan:hover {
+  transform: translateY(-2px) scale(1.03);
+  box-shadow: 0 8px 24px var(--cyan-glow);
+  filter: brightness(1.1);
+}
+
+.btn-outline {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--glass-border);
+  color: var(--text-main);
+  font-weight: 600;
+  font-size: 14px;
+  padding: 10px 24px;
+  border-radius: 12px;
+  transition: all 0.2s ease;
+}
+
+.btn-outline:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: var(--cyan-primary);
+  color: var(--cyan-primary);
+}
+
+/* === 6. CONTENT ELEMENTS === */
+.glass-card {
+  background: rgba(30, 41, 59, 0.3);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border);
+  border-radius: 28px;
+  padding: 2.5rem;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+}
+
+.title {
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  line-height: 1.1;
+  background: linear-gradient(to bottom, #fff, #94a3b8);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.input {
+  width: 100%;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid var(--glass-border);
+  color: #fff;
+  padding: 14px 20px;
+  border-radius: 14px;
+  font-size: 15px;
+  transition: all 0.3s ease;
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--cyan-primary);
+  background: rgba(0, 0, 0, 0.4);
+  box-shadow: 0 0 0 4px rgba(34, 211, 238, 0.1);
+}
+
+/* === 7. CORE ANIMATIONS === */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); filter: blur(5px); }
+  to { opacity: 1; transform: translateY(0); filter: blur(0); }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.8; transform: scale(1.05); }
+}
+
+@keyframes loading {
+  0% { width: 0%; }
+  100% { width: 100%; }
+}
+
+/* === 8. UTILITY CLASSES === */
+.animate-fade-in {
+  animation: fadeIn 0.8s ease-out forwards;
+}
+
+.animate-slide-up {
+  animation: slideUp 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-shake {
+  animation: shake 0.4s ease-in-out;
+}
+
+.animate-pulse-slow {
+  animation: pulse 4s ease-in-out infinite;
+}
+
+.animate-loading {
+  animation: loading 2.5s ease-in-out forwards;
+}
+
+/* === 9. PREMIUM IMAGE EFFECTS === */
+.glass-effect {
+  position: relative;
+  overflow: hidden;
+}
+
+.glass-effect::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(to right, transparent, rgba(255, 255, 255, 0.1), transparent);
+  transform: skewX(-25deg);
+  transition: 0.75s;
+}
+
+.glass-effect:hover::after {
+  left: 125%;
+}
+
+/* === 10. RESIZE ADD-ONS === */
+.react-resizable {
+  position: relative;
+  display: inline-block;
+}
+
+.react-resizable-handle {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  bottom: 0;
+  right: 0;
+  background: var(--cyan-primary);
+  clip-path: polygon(100% 0, 100% 100%, 0 100%);
+  cursor: se-resize;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: 10;
+}
+
+.react-resizable:hover .react-resizable-handle {
+  opacity: 0.6;
+}
+
+.react-resizable-handle:hover {
+  opacity: 1 !important;
+}
