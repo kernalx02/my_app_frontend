@@ -7,8 +7,12 @@ export default function Signup({ setPage }) {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const [showSuccess, setShowSuccess] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const handleSignup = (e) => {
+  // Your Render Backend URL
+  const API_URL = "https://api-myapp.onrender.com";
+
+  const handleSignup = async (e) => {
     e.preventDefault();
     setErrorMessage('');
 
@@ -17,38 +21,40 @@ export default function Signup({ setPage }) {
       return;
     }
 
-    // --- BLACKLIST CHECK ---
-    const blacklist = JSON.parse(localStorage.getItem('blacklist') || '[]');
-    if (blacklist.includes(email.toLowerCase())) {
-      setErrorMessage("This email has been banned from registration.");
-      return;
-    }
-
     if (password !== confirmPassword) {
       setErrorMessage("Passwords do not match.");
       return;
     }
 
-    const existingUsers = JSON.parse(localStorage.getItem('users') || '[]');
-    if (existingUsers.find(u => u.email.toLowerCase() === email.toLowerCase())) {
-      setErrorMessage("An account with this email already exists.");
-      return;
+    setLoading(true);
+
+    try {
+      const response = await fetch(`${API_URL}/api/signup`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          username: username,
+          email: email.toLowerCase(),
+          password: password,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        // This catches "User already exists" or server errors from your server.js
+        throw new Error(data.message || "Registration failed.");
+      }
+
+      // --- SUCCESS ---
+      setShowSuccess(true);
+    } catch (err) {
+      setErrorMessage(err.message);
+    } finally {
+      setLoading(false);
     }
-
-    const newUser = {
-      id: Date.now(),
-      username: username,
-      email: email.toLowerCase(),
-      password: password, 
-      role: 'user', 
-      profilePic: '/default_pic.jpg',
-      posts: []
-    };
-
-    const updatedUsers = [...existingUsers, newUser];
-    localStorage.setItem('users', JSON.stringify(updatedUsers));
-    
-    setShowSuccess(true);
   };
 
   return (
@@ -93,27 +99,31 @@ export default function Signup({ setPage }) {
         <form onSubmit={handleSignup} className="space-y-4">
           <div>
             <label className="text-[10px] font-black text-slate-400 ml-1 uppercase tracking-widest">Username</label>
-            <input type="text" placeholder="johndoe" className="input mt-1" value={username} onChange={(e) => setUsername(e.target.value)} required />
+            <input type="text" placeholder="johndoe" className="input mt-1" value={username} onChange={(e) => setUsername(e.target.value)} required disabled={loading} />
           </div>
 
           <div>
             <label className="text-[10px] font-black text-slate-400 ml-1 uppercase tracking-widest">Email Address</label>
-            <input type="email" placeholder="name@domain.com" className="input mt-1" value={email} onChange={(e) => setEmail(e.target.value)} required />
+            <input type="email" placeholder="name@domain.com" className="input mt-1" value={email} onChange={(e) => setEmail(e.target.value)} required disabled={loading} />
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="text-[10px] font-black text-slate-400 ml-1 uppercase tracking-widest">Password</label>
-              <input type="password" placeholder="••••••••" className="input mt-1" value={password} onChange={(e) => setPassword(e.target.value)} required />
+              <input type="password" placeholder="••••••••" className="input mt-1" value={password} onChange={(e) => setPassword(e.target.value)} required disabled={loading} />
             </div>
             <div>
               <label className="text-[10px] font-black text-slate-400 ml-1 uppercase tracking-widest">Confirm</label>
-              <input type="password" placeholder="••••••••" className={`input mt-1 ${confirmPassword && password !== confirmPassword ? 'border-red-500/50' : ''}`} value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required />
+              <input type="password" placeholder="••••••••" className={`input mt-1 ${confirmPassword && password !== confirmPassword ? 'border-red-500/50' : ''}`} value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required disabled={loading} />
             </div>
           </div>
 
-          <button type="submit" className="btn-cyan w-full py-4 mt-4 text-xs tracking-[0.2em] font-black uppercase shadow-lg">
-            Create Account
+          <button 
+            type="submit" 
+            disabled={loading}
+            className={`btn-cyan w-full py-4 mt-4 text-xs tracking-[0.2em] font-black uppercase shadow-lg ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
+          >
+            {loading ? 'Processing...' : 'Create Account'}
           </button>
           
           <p className="text-center text-[10px] text-slate-500 mt-6 uppercase font-bold tracking-tighter">

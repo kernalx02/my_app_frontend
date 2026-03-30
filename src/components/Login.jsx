@@ -1,47 +1,53 @@
 import React, { useState } from 'react';
 
-// Added { setPage } here so the component can receive the function
 export default function Login({ setPage }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const [isSuccess, setIsSuccess] = useState(false);
   const [loggedInUsername, setLoggedInUsername] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleLogin = (e) => {
+  // Your specific Render URL
+  const API_URL = "https://api-myapp.onrender.com";
+
+  const handleLogin = async (e) => {
     e.preventDefault();
     setErrorMessage('');
+    setLoading(true);
 
     if (!email || !password) {
       setErrorMessage("Please enter both email and password.");
+      setLoading(false);
       return;
     }
 
-    // --- BLACKLIST CHECK ---
-    const blacklist = JSON.parse(localStorage.getItem('blacklist') || '[]');
-    if (blacklist.includes(email.toLowerCase())) {
-      setErrorMessage("ACCESS DENIED: This email is blacklisted from the EPC registry.");
-      return;
+    try {
+      const response = await fetch(`${API_URL}/api/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          email: email.toLowerCase(), 
+          password: password 
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Login failed.");
+      }
+
+      // Save user to session
+      localStorage.setItem('currentUser', JSON.stringify(data));
+      setLoggedInUsername(data.username);
+      setIsSuccess(true);
+
+    } catch (err) {
+      setErrorMessage(err.message);
+    } finally {
+      setLoading(false);
     }
-
-    const existingUsers = JSON.parse(localStorage.getItem('users') || '[]');
-    const foundUser = existingUsers.find(
-      (user) => user.email.toLowerCase() === email.toLowerCase()
-    );
-
-    if (!foundUser) {
-      setErrorMessage("No account found with this email.");
-      return;
-    }
-
-    if (foundUser.password !== password) {
-      setErrorMessage("Incorrect password. Please try again.");
-      return;
-    }
-
-    localStorage.setItem('currentUser', JSON.stringify(foundUser));
-    setLoggedInUsername(foundUser.username);
-    setIsSuccess(true);
   };
 
   if (isSuccess) {
@@ -55,7 +61,7 @@ export default function Login({ setPage }) {
           Authorized as <span className="text-cyan-500">{loggedInUsername}</span>
         </p>
         <button 
-          onClick={() => window.location.reload()} // Reloads to trigger App state reset to home
+          onClick={() => window.location.reload()} 
           className="btn-cyan w-full py-4 text-xs tracking-widest font-black uppercase"
         >
           CONTINUE TO DASHBOARD
@@ -85,6 +91,7 @@ export default function Login({ setPage }) {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
+            disabled={loading}
           />
         </div>
 
@@ -97,17 +104,22 @@ export default function Login({ setPage }) {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
+            disabled={loading}
           />
         </div>
 
-        <button type="submit" className="btn-cyan w-full py-4 mt-4 text-xs tracking-[0.2em] font-black uppercase shadow-lg">
-          Authorize Login
+        <button 
+          type="submit" 
+          disabled={loading}
+          className={`btn-cyan w-full py-4 mt-4 text-xs tracking-[0.2em] font-black uppercase shadow-lg ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
+        >
+          {loading ? 'Verifying...' : 'Authorize Login'}
         </button>
         
         <p className="text-center text-[10px] text-slate-500 mt-6 uppercase font-bold tracking-tighter">
           No ID yet? <span 
             className="underline cursor-pointer text-cyan-500 hover:text-cyan-400 transition-colors" 
-            onClick={() => setPage('signup')} // Use lowercase 'signup' to stay consistent
+            onClick={() => setPage('signup')} 
           >Sign Up</span>
         </p>
       </form>
