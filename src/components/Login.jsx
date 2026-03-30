@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 
-// Using PascalCase for the component function name as shown in your file structure (Login.jsx)
 export default function Login({ setPage }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -9,19 +8,12 @@ export default function Login({ setPage }) {
   const [loggedInUsername, setLoggedInUsername] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // Keep your existing Render backend URL exactly as is
   const API_URL = "https://api-myapp.onrender.com";
 
   const handleLogin = async (e) => {
     e.preventDefault();
     setErrorMessage('');
     setLoading(true);
-
-    if (!email || !password) {
-      setErrorMessage("Please enter both email and password.");
-      setLoading(false);
-      return;
-    }
 
     try {
       const response = await fetch(`${API_URL}/api/login`, {
@@ -39,17 +31,15 @@ export default function Login({ setPage }) {
         throw new Error(data.message || "Login failed.");
       }
 
-      // 1. Save user to localStorage
+      // 1. Save to localStorage
       localStorage.setItem('currentUser', JSON.stringify(data));
       
-      // 2. Notify other components (Navbar, Profile) immediately
+      // 2. IMPORTANT: Dispatch the event so App.jsx updates WITHOUT a reload
       window.dispatchEvent(new Event('storage'));
 
-      // FIX FOR IMMEDIATE REDIRECT: Call setPage before updating other state
-      setPage('home'); 
-      
+      // 3. Set success states for the UI
       setLoggedInUsername(data.username);
-      setIsSuccess(true); // Left this for completeness, but navigation happens immediately above
+      setIsSuccess(true); 
 
     } catch (err) {
       setErrorMessage(err.message);
@@ -58,24 +48,29 @@ export default function Login({ setPage }) {
     }
   };
 
-  // Keep your style and functions, just fixing the "image didn't appear" problem.
-  // This state is briefly rendered if navigation takes a split second.
+  // --- SUCCESS SCREEN ---
   if (isSuccess) {
     return (
-      <div className="max-w-md mx-auto glass-card p-12 mt-10 animate-fade-in text-center flex flex-col items-center">
+      <div className="max-w-md mx-auto glass-card p-12 mt-10 animate-fade-in text-center flex flex-col items-center border border-white/5 bg-[#1e293b]/50 backdrop-blur-xl rounded-[2rem]">
         <div className="p-6 mb-6 rounded-full bg-cyan-500/10 ring-2 ring-cyan-500/20 shadow-inner">
-          {/* FIX FOR IMAGE NOT APPEARING: Assuming 'correct_login.png' is in './public' */}
-          <img src="/correct_login.png" alt="Success" className="w-20 h-20 object-contain" />
+          {/* IMAGE PATH FIX: Points to /public/correct_login.png */}
+          <img 
+            src="/correct_login.png" 
+            alt="Success" 
+            className="w-24 h-24 object-contain" 
+            onError={(e) => {
+              // This is a safety check: if the image fails, it shows a checkmark
+              e.target.style.display = 'none';
+              e.target.parentNode.innerHTML = '<span class="text-5xl">✅</span>';
+            }}
+          />
         </div>
         <h2 className="text-3xl font-black text-white italic uppercase tracking-tighter">Welcome Back!</h2>
         <p className="text-slate-400 mt-2 mb-8 font-medium">
           Authorized as <span className="text-cyan-500">{loggedInUsername}</span>
         </p>
         <button 
-          onClick={() => {
-            // Option B: Soft transition (Better UX)
-            setPage('home'); 
-          }} 
+          onClick={() => setPage('home')} 
           className="bg-cyan-500 hover:bg-cyan-400 text-black w-full py-4 text-xs tracking-widest font-black uppercase rounded-xl transition-all shadow-lg shadow-cyan-500/20"
         >
           CONTINUE TO DASHBOARD
@@ -84,6 +79,7 @@ export default function Login({ setPage }) {
     );
   }
 
+  // --- LOGIN FORM ---
   return (
     <div className="max-w-md mx-auto glass-card p-12 mt-10 animate-fade-in border border-white/5 bg-[#1e293b]/50 backdrop-blur-xl rounded-[2rem]">
       <h2 className="text-3xl font-black mb-2 text-white italic uppercase tracking-tighter">Log In</h2>

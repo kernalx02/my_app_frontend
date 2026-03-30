@@ -17,10 +17,27 @@ export default function App() {
   // --- CONFIG ---
   const API_URL = "https://api-myapp.onrender.com";
 
+  // 1. Initial Load Logic
   useEffect(() => {
     const user = localStorage.getItem('currentUser');
     if (user) setCurrentUser(JSON.parse(user));
     refreshPosts();
+  }, []);
+
+  // --- FIX: LISTEN FOR LOGIN EVENT WITHOUT RELOAD ---
+  useEffect(() => {
+    const handleStorageChange = () => {
+      const user = localStorage.getItem('currentUser');
+      if (user) {
+        setCurrentUser(JSON.parse(user));
+      } else {
+        setCurrentUser(null);
+      }
+    };
+
+    // Listen for the custom 'storage' event dispatched by Login.jsx
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
 
   // --- DATABASE ACTIONS ---
@@ -35,7 +52,6 @@ export default function App() {
     }
   };
 
-  // --- ADDED API LOGIC TO HANDLE VOTE ---
   const handleVote = async (id, type) => {
     if (!currentUser) return alert("Please log in to vote!");
 
@@ -50,7 +66,7 @@ export default function App() {
       });
 
       if (response.ok) {
-        refreshPosts(); // Updates UI with new vote counts from DB
+        refreshPosts(); 
       }
     } catch (err) {
       console.error("Voting error:", err);
