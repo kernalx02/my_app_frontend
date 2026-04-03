@@ -46,7 +46,7 @@ export default function Home() {
           <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-cyan-400 to-transparent opacity-30"></div>
           
           <p className="text-slate-300 text-xl leading-relaxed font-light tracking-wide">
-             "Elevate Your Community. A premium private space for creators. Experience high-performance interaction with a frosted glass interface."
+             "is a student-led scientific club that aims to develop engineering skills, promote innovation, and organize events like workshops and conferences to help students grow academically and professionally."
           </p>
           
           <div className="mt-8 pt-8 border-t border-white/10 flex flex-col items-center gap-2">
